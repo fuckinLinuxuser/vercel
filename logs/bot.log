@@ -1,0 +1,20 @@
+2025-08-04 18:05:01,572 [INFO] Start polling
+2025-08-04 18:05:01,891 [INFO] Run polling for bot @augustderverbot_bot id=7953632575 - 'test-server-bot'
+2025-08-04 18:06:13,061 [INFO] Update id=821898806 is handled. Duration 362 ms by bot id=7953632575
+2025-08-04 18:06:15,421 [INFO] Update id=821898807 is handled. Duration 150 ms by bot id=7953632575
+2025-08-04 18:06:26,217 [INFO] Update id=821898808 is not handled. Duration 1 ms by bot id=7953632575
+2025-08-04 18:06:31,047 [INFO] Update id=821898809 is handled. Duration 324 ms by bot id=7953632575
+2025-08-04 18:08:02,727 [WARNING] Received SIGTERM signal
+2025-08-04 18:08:02,727 [INFO] Polling stopped for bot @augustderverbot_bot id=7953632575 - 'test-server-bot'
+2025-08-04 18:08:02,727 [INFO] Polling stopped
+2025-08-04 18:21:34,696 [INFO] Start polling
+2025-08-04 18:21:34,995 [INFO] Run polling for bot @augustderverbot_bot id=7953632575 - 'test-server-bot'
+2025-08-04 18:22:14,526 [WARNING] Received SIGTERM signal
+2025-08-04 18:22:14,527 [INFO] Polling stopped for bot @augustderverbot_bot id=7953632575 - 'test-server-bot'
+2025-08-04 18:22:14,527 [INFO] Polling stopped
+2025-08-04 18:22:28,541 [INFO] Start polling
+2025-08-04 18:22:28,828 [INFO] Run polling for bot @augustderverbot_bot id=7953632575 - 'test-server-bot'
+2025-08-04 18:22:45,357 [INFO] Update id=821898810 is handled. Duration 470 ms by bot id=7953632575
+2025-08-04 18:33:16,734 [WARNING] Received SIGTERM signal
+2025-08-04 18:33:16,735 [INFO] Polling stopped for bot @augustderverbot_bot id=7953632575 - 'test-server-bot'
+2025-08-04 18:33:16,736 [INFO] Polling stopped
