@@ -32,6 +32,10 @@ Telegram-бот для студентов группы **С342**, созданн
 ⚠️ Пока установка в разработке. Ниже пример будущих шагов:
 
 ```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+brew install git
+
 git clone https://github.com/fuckinLinuxuser/vercel.git
 cd vercel
 docker compose up --build
