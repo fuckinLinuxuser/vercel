@@ -9,6 +9,7 @@ async def create_db_pool():
         password=config.DB_PASSWORD,
         database=config.DB_NAME
     )
+
     async with pool.acquire() as conn:
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS webapp_data (
@@ -17,5 +18,12 @@ async def create_db_pool():
                 data TEXT,
                 created_at TIMESTAMP DEFAULT NOW()
             );
+
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT UNIQUE,
+                started_at TIMESTAMP DEFAULT NOW()
+            );
         """)
+
     return pool

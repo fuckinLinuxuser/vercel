@@ -1,4 +1,6 @@
 from aiogram import Router, F # type: ignore
+from app.config import ADMINS, WEB_APP_URL
+from app.keyboards import reply_kb, webapp_kb
 from aiogram.types import (
     Message,
     ReplyKeyboardMarkup,
@@ -7,29 +9,33 @@ from aiogram.types import (
     InlineKeyboardButton,
     WebAppInfo
 )
+
+
 router = Router()
 
-WEB_APP_URL = "https://vercel-gray-gamma.vercel.app/"
 
 @router.message(F.text == "/start")
-async def start_handler(message: Message):
-    # Обычные кнопки внизу
-    reply_kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="📄 Последние записи")]
-        ],
-        resize_keyboard=True
+async def start_handler(message: Message, db):
+    user_id = message.from_user.id
+
+    # Проверяем: есть ли запись о пользователе
+    row = await db.fetchrow("SELECT * FROM users WHERE telegram_id = $1", user_id)
+    
+    if row:
+        # Уже был запуск
+        return await message.answer("👋 Ты уже запускал бота.", reply_markup=reply_kb)
+    
+    # Первый запуск → записываем в БД
+    await db.execute(
+        "INSERT INTO users (telegram_id) VALUES ($1);",
+        user_id
     )
 
-    # Inline-кнопка для Mini App (это нельзя сделать через обычную кнопку)
-    webapp_kb = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Открыть мини-апп 🚀", web_app=WebAppInfo(url=WEB_APP_URL))]
-        ]
-    )
 
-    await message.answer("Привет! Жми на мини-апп или посмотри записи 👇", reply_markup=reply_kb)
+    await message.answer("Привет! Добро пожаловать 👋", reply_markup=reply_kb)
     await message.answer("Открой мини-приложение:", reply_markup=webapp_kb)
+
+
 
 @router.message(F.text == "📄 Последние записи")
 async def show_posts(message: Message, db):
@@ -44,3 +50,20 @@ async def show_posts(message: Message, db):
         for r in rows
     ])
     await message.answer(f"📄 Последние 3 записи:\n\n{text}")
+
+
+
+@router.message(F.text == "Предупредить об опоздании")
+async def delay(message: Message, bot):
+    user = message.from_user
+
+    for admin_id in ADMINS:
+        await bot.send_message(
+            chat_id=admin_id,
+            text=(
+                f"📬 Пользователь <b>{user.full_name}</b> "
+                f" \"📢 Задержится \""
+            )
+        )
+
+    await message.answer ("Бот передал сообщение")
