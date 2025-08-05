@@ -1,5 +1,5 @@
-from aiogram import Router, F
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from aiogram import Router, F # type: ignore
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo # type: ignore
 
 router = Router()
 
