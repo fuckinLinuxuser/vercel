@@ -39,3 +39,5 @@ brew install git
 git clone https://github.com/fuckinLinuxuser/vercel.git
 cd vercel
 docker compose up --build
+
+eded
