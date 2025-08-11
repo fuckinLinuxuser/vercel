@@ -1,8 +1,14 @@
-prod-up:
+prod-up-detached:
 	docker compose -f prod/docker-compose.yml up --build
 	
+prod-up:
+	docker compose -f prod/docker-compose.yml up --build
+
 prod-down:
 	docker compose -f prod/docker-compose.yml down
+
+dev-up-detached:
+	docker compose -f develop/docker-compose.yml up --build
 
 dev-up:
 	docker compose -f develop/docker-compose.yml up --build
