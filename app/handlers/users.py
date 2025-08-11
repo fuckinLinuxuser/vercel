@@ -48,16 +48,16 @@ async def start_handler(message: Message, db):
 @router.message(F.text == "📄 Последние записи")
 async def show_posts(message: Message, db):
     rows = await db.fetch(
-        "SELECT user_id, data, created_at FROM webapp_data ORDER BY id DESC LIMIT 3"
+        "SELECT user_id, data, created_at FROM webapp_data ORDER BY id DESC LIMIT 5"
     )
     if not rows:
         return await message.answer("📭 Нет записей.")
 
     text = "\n\n".join([
-        f"<b>{r['created_at']:%d-%m}</b>\n<code>{r['data']}</code>"
+        f"<b>{r['created_at']:%d.%m}</b>\n<code>{r['data']}</code>"
         for r in rows
     ])
-    await message.answer(f"📄 Последние 3 записи:\n\n{text}")
+    await message.answer(f"📄 Последние 5 записей:\n\n{text}")
 
 
 
@@ -94,3 +94,10 @@ async def schedule_tomorrow(message: Message, db):
         schedule_text += f"{row['pair_number']} пара — {row['subject']}\n"
 
     await message.answer(schedule_text)
+
+@router.message(F.text == "📅 Расписание на неделю")
+async def schedule_week(message: Message, db):
+    today = datetime.now()
+    week_type = today.isocalendar()[1] % 2 + 1
+    
+    

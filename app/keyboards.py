@@ -27,7 +27,10 @@ admin_kb = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="✏️ Добавить запись")],
             [KeyboardButton(text="📖 Посмотреть записи")],
-            [KeyboardButton(text="🗑 Удалить запись")]
+            [KeyboardButton(text="🗑 Удалить запись")],
+            [KeyboardButton(text="📄 Последние записи")],
+            [KeyboardButton(text="📅 Расписание на завтра")],
+            [KeyboardButton(text="Изменить расписание")]
         ],
         resize_keyboard=True
     )
