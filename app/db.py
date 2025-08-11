@@ -14,6 +14,7 @@ async def create_db_pool():
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS webapp_data (
                 id SERIAL PRIMARY KEY,
+                full_name TEXT,
                 user_id BIGINT,
                 data TEXT,
                 created_at TIMESTAMP DEFAULT NOW()
@@ -21,6 +22,7 @@ async def create_db_pool():
 
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
+                full_name TEXT,
                 telegram_id BIGINT UNIQUE,
                 started_at TIMESTAMP DEFAULT NOW()
             );

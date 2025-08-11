@@ -11,7 +11,7 @@ from aiogram.types import (
 reply_kb = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="📄 Последние записи")],
-            [KeyboardButton(text="Предупредить об опоздании")],
+            [KeyboardButton(text="📣 Предупредить об опоздании")],
             [KeyboardButton(text="📅 Расписание на завтра")]
         ],
         resize_keyboard=True
@@ -21,4 +21,13 @@ webapp_kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="Открыть мини-апп 🚀", web_app=WebAppInfo(url=WEB_APP_URL))]
         ]
+    )
+
+admin_kb = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="✏️ Добавить запись")],
+            [KeyboardButton(text="📖 Посмотреть записи")],
+            [KeyboardButton(text="🗑 Удалить запись")]
+        ],
+        resize_keyboard=True
     )

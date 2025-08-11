@@ -20,6 +20,11 @@ router = Router()
 @router.message(F.text == "/start")
 async def start_handler(message: Message, db):
     user_id = message.from_user.id
+    
+    # Собираем полное имя
+    first_name = message.from_user.first_name or ""
+    last_name = message.from_user.last_name or ""
+    full_name = (first_name + " " + last_name).strip()
 
     # Проверяем: есть ли запись о пользователе
     row = await db.fetchrow("SELECT * FROM users WHERE telegram_id = $1", user_id)
@@ -30,12 +35,12 @@ async def start_handler(message: Message, db):
     
     # Первый запуск → записываем в БД
     await db.execute(
-        "INSERT INTO users (telegram_id) VALUES ($1);",
-        user_id
+        "INSERT INTO users (telegram_id, full_name) VALUES ($1, $2);",
+        user_id,
+        full_name
     )
-
-
-    await message.answer("Привет! Добро пожаловать 👋", reply_markup=reply_kb)
+    
+    await message.answer(f"Привет, {full_name}!", reply_markup=reply_kb)
     await message.answer("Открой мини-приложение:", reply_markup=webapp_kb)
 
 
@@ -56,7 +61,7 @@ async def show_posts(message: Message, db):
 
 
 
-@router.message(F.text == "Предупредить об опоздании")
+@router.message(F.text == "📣 Предупредить об опоздании")
 async def delay(message: Message, bot):
     user = message.from_user
 
