@@ -11,7 +11,8 @@ from aiogram.types import (
 reply_kb = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="📄 Последние записи")],
-            [KeyboardButton(text="Предупредить об опоздании")]
+            [KeyboardButton(text="Предупредить об опоздании")],
+            [KeyboardButton(text="📅 Расписание на завтра")]
         ],
         resize_keyboard=True
     )

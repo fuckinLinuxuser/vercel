@@ -24,6 +24,14 @@ async def create_db_pool():
                 telegram_id BIGINT UNIQUE,
                 started_at TIMESTAMP DEFAULT NOW()
             );
+
+            CREATE TABLE IF NOT EXISTS schedules (
+                id SERIAL PRIMARY KEY,
+                week_type INTEGER CHECK (week_type IN (1, 2)),
+                day_of_week INTEGER CHECK (day_of_week BETWEEN 1 AND 7),
+                pair_number INTEGER CHECK (pair_number BETWEEN 1 AND 4),
+                subject TEXT NOT NULL
+            );
         """)
 
     return pool

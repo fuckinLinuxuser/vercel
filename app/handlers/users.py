@@ -1,9 +1,12 @@
 from aiogram import Router, F # type: ignore
+from app import db
 from app.config import ADMINS, WEB_APP_URL
 from app.keyboards import reply_kb, webapp_kb
+from datetime import datetime, timedelta
 from aiogram.types import (
     Message,
     ReplyKeyboardMarkup,
+    CallbackQuery,
     KeyboardButton,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
@@ -67,3 +70,22 @@ async def delay(message: Message, bot):
         )
 
     await message.answer ("Бот передал сообщение")
+
+@router.message(F.text == "📅 Расписание на завтра")
+async def schedule_tomorrow(message: Message, db):
+    tomorrow = datetime.now() + timedelta(days=1)
+    tomorrow_weekday = tomorrow.weekday()  # Понедельник = 0, Воскресенье = 6
+
+    rows = await db.fetch(
+        "SELECT pair_number, subject FROM schedules WHERE day_of_week = $1 ORDER BY pair_number",
+        tomorrow_weekday
+    )
+
+    if not rows:
+        return await message.answer("Расписание на завтра отсутствует.")
+
+    schedule_text = f"📅 Расписание на {tomorrow.strftime('%d.%m.%Y')}:\n"
+    for row in rows:
+        schedule_text += f"{row['pair_number']} пара — {row['subject']}\n"
+
+    await message.answer(schedule_text)
