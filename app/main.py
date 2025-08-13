@@ -17,6 +17,7 @@ async def main():
 
     db_pool = await db.create_db_pool()
     dp.message.middleware.register(DBMiddleware(db_pool))
+    dp.callback_query.middleware.register(DBMiddleware(db_pool))
 
     dp.include_router(users.router)
     dp.include_router(admin.router)

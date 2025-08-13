@@ -38,6 +38,10 @@ brew install git
 
 git clone https://github.com/fuckinLinuxuser/vercel.git
 cd vercel
-docker compose up --build
+make dev-up - запуск в dev
+make prod-up - запуск в prod
+make dev-down - остановка в dev
+make prod-down - остановка в prod
+
 
 eded
