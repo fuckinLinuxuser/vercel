@@ -1,7 +1,7 @@
 from aiogram import Router, F # type: ignore
 from app import db
 from app.config import ADMINS, WEB_APP_URL
-from app.keyboards import reply_kb, webapp_kb
+from app.keyboards import reply_kb, webapp_kb, users_inline_schedule_kb
 from datetime import datetime, timedelta
 from aiogram.types import (
     Message,
@@ -76,13 +76,18 @@ async def delay(message: Message, bot):
 
     await message.answer ("Бот передал сообщение")
 
-@router.message(F.text == "📅 Расписание на завтра")
+@router.message(F.text == "📅 Расписание")
+async def schedule(message: Message, db):
+    await message.answer("Выберите действие:", reply_markup=users_inline_schedule_kb)
+
+
+@router.callback_query(F.data == "schedule_tomorrow")
 async def schedule_tomorrow(message: Message, db):
     tomorrow = datetime.now() + timedelta(days=1)
     tomorrow_weekday = tomorrow.weekday()  # Понедельник = 0, Воскресенье = 6
-
+        
     rows = await db.fetch(
-        "SELECT pair_number, subject FROM schedules WHERE day_of_week = $1 ORDER BY pair_number",
+        "SELECT id, pair_number, subject FROM schedules WHERE day_of_week = $1 ORDER BY pair_number",
         tomorrow_weekday
     )
 
@@ -95,7 +100,7 @@ async def schedule_tomorrow(message: Message, db):
 
     await message.answer(schedule_text)
 
-@router.message(F.text == "📅 Расписание на неделю")
+@router.callback_query(F.data == "schedule_week")
 async def schedule_week(message: Message, db):
     today = datetime.now()
     week_type = today.isocalendar()[1] % 2 + 1
