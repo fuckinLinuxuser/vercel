@@ -1,14 +1,13 @@
 from aiogram import Router, F
-from aiogram.types import Message
 from app.config import ADMINS
 from aiogram.filters import Command
 from app.keyboards import admin_inline_posts_kb, admin_inline_schedule_kb, admin_kb
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
+from app.middleware import DBMiddleware
 
 router = Router()
-
 class PostForm(StatesGroup):
     waiting_for_post = State()
 
@@ -22,20 +21,21 @@ async def cmd_add_post(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer("✍️ Введите текст записи:")
     await state.set_state(PostForm.waiting_for_post)
 
-@router.callback_query(PostForm.waiting_for_post)
-async def process_post(callback: CallbackQuery, state: FSMContext, db):
+@router.message(PostForm.waiting_for_post)
+async def process_post(message: Message, state: FSMContext, **kwargs):
+    db = kwargs.get("db")
     text = message.text.strip()
-    full_name = from_user.full_name or from_user.username or "Неизвестный"
+    full_name = message.from_user.full_name or message.from_user.username or "Неизвестный"
     data = message.text
     if not text:
-        return await callback.message.answer("⚠️ Текст не может быть пустым. Попробуйте ещё раз.")
+        return await message.answer("⚠️ Текст не может быть пустым. Попробуйте ещё раз.")
 
     await db.execute(
         "INSERT INTO webapp_data (full_name, data) VALUES ($1, $2);",
         full_name,
         text
     )
-    await callback.message.answer("✅ Запись добавлена!")
+    await message.answer("✅ Запись добавлена!")
     await state.clear()
 
 
@@ -47,25 +47,27 @@ async def delete_record_start(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer("🗑 Введи ID записи, которую хочешь удалить:")
     await state.set_state(DeleteRecord.waiting_for_record_id)
 
-@router.callback_query(DeleteRecord.waiting_for_record_id)
-async def delete_record_confirm(callback: CallbackQuery, state: FSMContext, db):
-    if not callback.message.text.isdigit():
-        return await callback.message.answer("⚠️ ID должен быть числом. Попробуй ещё раз.")
+@router.message(DeleteRecord.waiting_for_record_id)
+async def delete_record_confirm(message: Message, state: FSMContext, **kwargs):
+    db = kwargs.get("db")
+    if not message.text.isdigit():
+        return await message.answer("⚠️ ID должен быть числом. Попробуй ещё раз.")
     
-    post_id = int(callback.message.text)
+    post_id = int(message.text)
     result = await db.execute("DELETE FROM webapp_data WHERE id = $1", post_id)
     
     if result == "DELETE 1":
-        await callback.message.answer(f"✅ Запись #{post_id} успешно удалена.")
+        await message.answer(f"✅ Запись #{post_id} успешно удалена.")
     else:
-        await callback.message.answer("❌ Запись с таким ID не найдена.")
+        await message.answer("❌ Запись с таким ID не найдена.")
     
     await state.clear()
 
 
 # Функция просмотра последних 10 записей (только для админов)
 @router.callback_query(F.data == "list_posts")
-async def list_posts(callback: CallbackQuery, db):
+async def list_posts(callback: CallbackQuery, state: FSMContext, **kwargs):
+    db = kwargs.get("db")
     rows = await db.fetch("SELECT id, full_name, data, created_at FROM webapp_data ORDER BY id DESC LIMIT 10")
     if not rows:
         return await callback.message.answer("📭 Нет записей.")
@@ -86,12 +88,13 @@ async def cmd_schedule(message: Message):
 
 
 @router.callback_query(F.data == "change_schedule")
-async def change_schedule(message: Message, state: FSMContext):
-    await message.answer("Введите данные в формате:\n\"Номер недели, Номер дня недели, Номер пары, Название предмета\"\nПример: 1, 3, 2, Алгебра")
+async def change_schedule(callback: CallbackQuery, state: FSMContext):
+    await callback.message.answer("Введите данные в формате:\n\"Номер недели, Номер дня недели, Номер пары, Название предмета\"\nПример: 1, 3, 2, Алгебра")
     await state.set_state(ScheduleForm.waiting_for_data)
     
 @router.message(ScheduleForm.waiting_for_data)
-async def process_data(message: Message, state: FSMContext, db):
+async def process_data(message: Message, state: FSMContext, **kwargs):
+    db = kwargs.get("db")
     text = message.text.strip()
     parts = [p.strip() for p in text.split(",")]
 

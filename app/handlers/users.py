@@ -82,7 +82,7 @@ async def schedule(message: Message, db):
 
 
 @router.callback_query(F.data == "schedule_tomorrow")
-async def schedule_tomorrow(message: Message, db):
+async def schedule_tomorrow(callback: CallbackQuery, db):
     tomorrow = datetime.now() + timedelta(days=1)
     tomorrow_weekday = tomorrow.weekday()  # Понедельник = 0, Воскресенье = 6
         
@@ -92,13 +92,13 @@ async def schedule_tomorrow(message: Message, db):
     )
 
     if not rows:
-        return await message.answer("Расписание на завтра отсутствует.")
+        return await callback.message.answer("Расписание на завтра отсутствует.")
 
     schedule_text = f"📅 Расписание на {tomorrow.strftime('%d.%m.%Y')}:\n"
     for row in rows:
         schedule_text += f"{row['pair_number']} пара — {row['subject']}\n"
 
-    await message.answer(schedule_text)
+    await callback.message.answer(schedule_text)
 
 @router.callback_query(F.data == "schedule_week")
 async def schedule_week(message: Message, db):

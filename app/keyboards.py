@@ -61,8 +61,7 @@ admin_inline_posts_kb = InlineKeyboardMarkup(
             InlineKeyboardButton(text="📖 Посмотреть записи", callback_data="list_posts")
         ],
         [
-            InlineKeyboardButton(text="🗑 Удалить запись", callback_data="delete_post"),
-            InlineKeyboardButton(text="📄 Последние записи", callback_data="list_posts")
+            InlineKeyboardButton(text="🗑 Удалить запись", callback_data="delete_post")
         ]
     ],
     resize_keyboard=True
