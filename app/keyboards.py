@@ -38,7 +38,8 @@ admin_kb = ReplyKeyboardMarkup(
 users_inline_schedule_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text="📅 Расписание на завтра", callback_data="schedule_tomorrow")
+            InlineKeyboardButton(text="📅 Расписание на завтра", callback_data="schedule_tomorrow"),
+            InlineKeyboardButton(text="📅 Расписание на неделю", callback_data="schedule_week")
         ]
     ],
     resize_keyboard=True
@@ -48,7 +49,8 @@ admin_inline_schedule_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(text="📅 Расписание на завтра", callback_data="schedule_tomorrow"),
-            InlineKeyboardButton(text="📆 Изменить расписание", callback_data="change_schedule")
+            InlineKeyboardButton(text="📆 Изменить расписание", callback_data="change_schedule"),
+            InlineKeyboardButton(text="📅 Расписание на неделю", callback_data="schedule_week")
         ]
     ],
     resize_keyboard=True

@@ -82,11 +82,6 @@ class ScheduleForm(StatesGroup):
     waiting_for_data = State()
 
 
-@router.message(F.text == "📆 Расписание")
-async def cmd_schedule(message: Message):
-    await message.answer("Выберите действие:", reply_markup=admin_inline_schedule_kb)
-
-
 @router.callback_query(F.data == "change_schedule")
 async def change_schedule(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer("Введите данные в формате:\n\"Номер недели, Номер дня недели, Номер пары, Название предмета\"\nПример: 1, 3, 2, Алгебра")
@@ -130,12 +125,4 @@ async def process_data(message: Message, state: FSMContext, **kwargs):
     )
 
     await message.answer("✅ Расписание успешно изменено!")
-    await state.clear()
-
-
-@router.message(F.text == "/admin")
-async def admin_panel(message: Message):
-    if message.from_user.id not in ADMINS:
-        return await message.answer("🚫 У тебя нет доступа.")
-    
-    await message.answer("👑 Админ-панель:\n- /list — посмотреть все записи", reply_markup=admin_kb)    
+    await state.clear()  

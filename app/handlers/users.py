@@ -1,7 +1,7 @@
 from aiogram import Router, F # type: ignore
 from app import db
 from app.config import ADMINS, WEB_APP_URL
-from app.keyboards import reply_kb, webapp_kb, users_inline_schedule_kb
+from app.keyboards import reply_kb, webapp_kb, users_inline_schedule_kb, admin_inline_schedule_kb, admin_kb
 from datetime import datetime, timedelta
 from aiogram.types import (
     Message,
@@ -30,8 +30,10 @@ async def start_handler(message: Message, db):
     row = await db.fetchrow("SELECT * FROM users WHERE telegram_id = $1", user_id)
     
     if row:
-        # Уже был запуск
-        return await message.answer("👋 Ты уже запускал бота.", reply_markup=reply_kb)
+        if message.from_user.id in ADMINS:
+            return await message.answer("👋 Ты уже запускал бота.", reply_markup=admin_kb)
+        else:
+            return await message.answer("👋 Ты уже запускал бота.", reply_markup=reply_kb)
     
     # Первый запуск → записываем в БД
     await db.execute(
@@ -40,7 +42,10 @@ async def start_handler(message: Message, db):
         full_name
     )
     
-    await message.answer(f"Привет, {full_name}!", reply_markup=reply_kb)
+    if message.from_user.id in ADMINS:
+        await message.answer(f"Привет, {full_name}!", reply_markup=admin_kb)
+    else:
+        await message.answer(f"Привет, {full_name}!", reply_markup=reply_kb)
     await message.answer("Открой мини-приложение:", reply_markup=webapp_kb)
 
 
@@ -78,16 +83,21 @@ async def delay(message: Message, bot):
 
 @router.message(F.text == "📅 Расписание")
 async def schedule(message: Message, db):
-    await message.answer("Выберите действие:", reply_markup=users_inline_schedule_kb)
+    if message.from_user.id in ADMINS:
+        await message.answer("Выберите действие:", reply_markup=admin_inline_schedule_kb)
+    else:
+        await message.answer("Выберите действие:", reply_markup=users_inline_schedule_kb)
 
 
 @router.callback_query(F.data == "schedule_tomorrow")
 async def schedule_tomorrow(callback: CallbackQuery, db):
+    week_type = datetime.now().isocalendar()[1] % 2 + 1
     tomorrow = datetime.now() + timedelta(days=1)
     tomorrow_weekday = tomorrow.weekday()  # Понедельник = 0, Воскресенье = 6
         
     rows = await db.fetch(
-        "SELECT id, pair_number, subject FROM schedules WHERE day_of_week = $1 ORDER BY pair_number",
+        "SELECT id, pair_number, subject FROM schedules WHERE week_type = $1 AND day_of_week = $2 ORDER BY pair_number",
+        week_type,
         tomorrow_weekday
     )
 
@@ -101,8 +111,22 @@ async def schedule_tomorrow(callback: CallbackQuery, db):
     await callback.message.answer(schedule_text)
 
 @router.callback_query(F.data == "schedule_week")
-async def schedule_week(message: Message, db):
+async def schedule_week(callback: CallbackQuery, db):
     today = datetime.now()
     week_type = today.isocalendar()[1] % 2 + 1
+    
+    rows = await db.fetch(
+        "SELECT id, pair_number, subject FROM schedules WHERE week_type = $1 ORDER BY day_of_week, pair_number",
+        week_type
+    )
+    
+    if not rows:
+        return await callback.message.answer("Расписание на неделю отсутствует.")
+
+    schedule_text = "\n\n".join([
+        f"{row['pair_number']} пара — {row['subject']}"
+        for row in rows
+    ])
+    await callback.message.answer(schedule_text)
     
     
