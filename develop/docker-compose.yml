@@ -28,5 +28,18 @@ services:
       - 5433:5432
     restart: always
 
+
+go-service:
+    build:
+      context: ./go-service  
+      dockerfile: Dockerfile  
+    container_name: go_service_dev
+    environment:
+      - INTERNAL_TOKEN=${INTERNAL_TOKEN}   
+    ports:
+      - "8080:8080"    
+    restart: unless-stopped
+
+
 volumes:
   pgdata:
