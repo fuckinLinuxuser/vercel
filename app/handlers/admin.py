@@ -1,7 +1,7 @@
 from aiogram import Router, F
 from app.config import ADMINS
 from aiogram.filters import Command
-from app.keyboards import admin_inline_posts_kb, admin_inline_schedule_kb, admin_kb
+from app.keyboards import admin_inline_schedule_kb, admin_kb, back_kb, admin_inline_posts_kb
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
@@ -11,14 +11,16 @@ router = Router()
 class PostForm(StatesGroup):
     waiting_for_post = State()
 
-@router.message(F.text == "✏️ Записи")
-async def cmd_posts(message: Message):
-    await message.answer("Выберите действие:", reply_markup=admin_inline_posts_kb)
+@router.callback_query(F.data == "posts")
+async def cmd_add_post(callback: CallbackQuery):
+    await callback.message.delete()
+    await callback.message.answer("✍️ Выберите действие:", reply_markup=admin_inline_posts_kb)
 
 
 @router.callback_query(F.data == "add_post")
-async def cmd_add_post(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer("✍️ Введите текст записи:")
+async def add_post_start(callback: CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+    await callback.message.answer("✍️ Введите текст записи:", reply_markup=back_kb)
     await state.set_state(PostForm.waiting_for_post)
 
 @router.message(PostForm.waiting_for_post)
@@ -44,8 +46,9 @@ class DeleteRecord(StatesGroup):
 
 @router.callback_query(F.data == "delete_post")
 async def delete_record_start(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer("🗑 Введи ID записи, которую хочешь удалить:")
+    await callback.message.answer("🗑 Введи ID записи, которую хочешь удалить:", reply_markup=back_kb)
     await state.set_state(DeleteRecord.waiting_for_record_id)
+    await callback.answer()
 
 @router.message(DeleteRecord.waiting_for_record_id)
 async def delete_record_confirm(message: Message, state: FSMContext, **kwargs):
@@ -76,7 +79,8 @@ async def list_posts(callback: CallbackQuery, state: FSMContext, **kwargs):
         f"#{r['id']} | {r['full_name']} | {r['created_at'].strftime('%d.%m')}\n {r['data']}"
         for r in rows
     ])
-    await callback.message.answer(f"🗂 Последние записи:\n\n{text}")
+    await callback.message.answer(f"🗂 Последние записи:\n\n{text}", reply_markup=back_kb)
+
 
 class ScheduleForm(StatesGroup):
     waiting_for_data = State()
@@ -84,9 +88,10 @@ class ScheduleForm(StatesGroup):
 
 @router.callback_query(F.data == "change_schedule")
 async def change_schedule(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer("Введите данные в формате:\n\"Номер недели, Номер дня недели, Номер пары, Название предмета\"\nПример: 1, 3, 2, Алгебра")
+    await callback.message.answer("Введите данные в формате:\n\"Номер недели, Номер дня недели, Номер пары, Название предмета\"\nПример: 1, 3, 2, Алгебра", reply_markup=back_kb)
     await state.set_state(ScheduleForm.waiting_for_data)
-    
+    await callback.answer()
+
 @router.message(ScheduleForm.waiting_for_data)
 async def process_data(message: Message, state: FSMContext, **kwargs):
     db = kwargs.get("db")
@@ -95,13 +100,13 @@ async def process_data(message: Message, state: FSMContext, **kwargs):
 
     # Проверка на количество аргументов
     if len(parts) != 4:
-        return await message.answer("⚠️ Неверный формат данных. Попробуйте ещё раз.")
+        return await message.answer("⚠️ Неверный формат данных. Попробуйте ещё раз.", reply_markup=back_kb)
 
     week_type_str, day_of_week_str, pair_number_str, subject = parts
 
     # Проверка, что первые три — числа
     if not (week_type_str.isdigit() and day_of_week_str.isdigit() and pair_number_str.isdigit()):
-        return await message.answer("⚠️ Неверный формат данных. Попробуйте ещё раз.")
+        return await message.answer("⚠️ Неверный формат данных. Попробуйте ещё раз.", reply_markup=back_kb)
 
     # Преобразуем в int
     week_type = int(week_type_str)
@@ -124,5 +129,5 @@ async def process_data(message: Message, state: FSMContext, **kwargs):
         subject
     )
 
-    await message.answer("✅ Расписание успешно изменено!")
+    await message.answer("✅ Расписание успешно изменено!", reply_markup=back_kb)
     await state.clear()  

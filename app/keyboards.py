@@ -1,18 +1,15 @@
 from app.config import WEB_APP_URL
 from aiogram.types import (
-    Message,
-    ReplyKeyboardMarkup,
-    KeyboardButton,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     WebAppInfo
 )
 
-reply_kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="📄 Последние записи")],
-            [KeyboardButton(text="📣 Предупредить об опоздании")],
-            [KeyboardButton(text="📅 Расписание")]
+users_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="📄 Последние записи", callback_data="show_posts")],
+            [InlineKeyboardButton(text="📣 Предупредить об опоздании", callback_data="delay")],
+            [InlineKeyboardButton(text="📅 Расписание", callback_data="schedule")]
         ],
         resize_keyboard=True
     )
@@ -23,13 +20,13 @@ webapp_kb = InlineKeyboardMarkup(
         ]
     )
 
-admin_kb = ReplyKeyboardMarkup(
-    keyboard=[
+admin_kb = InlineKeyboardMarkup(
+    inline_keyboard=[
         [
-            KeyboardButton(text="✏️ Записи"),
+            InlineKeyboardButton(text="✏️ Записи", callback_data="posts"),
         ],
         [
-            KeyboardButton(text="📅 Расписание"),
+            InlineKeyboardButton(text="📅 Расписание", callback_data="schedule"),
         ]
     ],
     resize_keyboard=True
@@ -68,3 +65,11 @@ admin_inline_posts_kb = InlineKeyboardMarkup(
     ],
     resize_keyboard=True
 )    
+
+back_kb = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text="🔙 Назад", callback_data="back")
+        ]
+    ]
+)
