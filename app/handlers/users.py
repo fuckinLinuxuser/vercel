@@ -3,6 +3,7 @@ from app import db
 from app.config import ADMINS, WEB_APP_URL
 from app.keyboards import users_kb, webapp_kb, users_inline_schedule_kb, admin_inline_schedule_kb, admin_kb, back_kb
 from datetime import datetime, timedelta
+import html
 from aiogram.types import (
     Message,
     CallbackQuery,
@@ -27,41 +28,39 @@ async def start_handler(message: Message, db):
     # Проверяем: есть ли запись о пользователе
     row = await db.fetchrow("SELECT * FROM users WHERE telegram_id = $1", user_id)
     
-    if row:
-        if message.from_user.id in ADMINS:
-            return await message.answer("👋 Ты уже запускал бота.", reply_markup=admin_kb)
-        else:
-            return await message.answer("👋 Ты уже запускал бота.", reply_markup=users_kb)
+
+    return await message.answer("👋 Ты уже запускал бота.", reply_markup=users_kb)
     
     # Первый запуск → записываем в БД
+    
     await db.execute(
         "INSERT INTO users (telegram_id, full_name) VALUES ($1, $2);",
         user_id,
         full_name
     )
     
-    if message.from_user.id in ADMINS:
-        await message.answer(f"Привет, {full_name}!", reply_markup=admin_kb)
-    else:
-        await message.answer(f"Привет, {full_name}!", reply_markup=users_kb)
-    await message.answer("Открой мини-приложение:", reply_markup=webapp_kb)
+    await message.answer(f"Привет, {full_name}!", reply_markup=admin_kb)
 
 
 
 @router.callback_query(F.data == "show_posts")
-async def show_posts(message: Message, db):
+async def show_posts(callback: CallbackQuery, db):
     rows = await db.fetch(
         "SELECT user_id, data, created_at FROM webapp_data ORDER BY id DESC LIMIT 5"
     )
+
+    for r in rows:
+       created_at = r['created_at'].strftime('%d.%m')
+       data = html.escape(str(r['data']))
+       text = f"<b>{created_at}</b>\n{data}"   
+    await callback.message.answer(rows, reply_markup=back_kb)
+    
+    await callback.answer()
+    
     if not rows:
-        return await message.answer("📭 Нет записей.", reply_markup=back_kb)
-
-    text = "\n\n".join([
-        f"<b>{r['created_at']:%d.%m}</b>\n<code>{r['data']}</code>"
-        for r in rows
-    ])
-    await message.answer(f"📄 Последние 5 записей:\n\n{text}", reply_markup=back_kb)
-
+        return await callback.message.answer("📭 Нет записей.", reply_markup=back_kb)
+    await callback.answer()
+    return
 
 
 @router.callback_query(F.data == "delay")
