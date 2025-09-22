@@ -38,8 +38,10 @@ async def start_handler(message: Message, db):
         user_id,
         full_name
     )
-    
-    await message.answer(f"Привет, {full_name}!", reply_markup=admin_kb)
+    if user_id in ADMINS:
+        await message.answer(f"Привет, {full_name}!", reply_markup=admin_kb)
+    else:
+        await message.answer(f"Привет, {full_name}!", reply_markup=users_kb)
 
 
 
@@ -49,11 +51,11 @@ async def show_posts(callback: CallbackQuery, db):
         "SELECT user_id, data, created_at FROM webapp_data ORDER BY id DESC LIMIT 5"
     )
 
-    for r in rows:
-       created_at = r['created_at'].strftime('%d.%m')
-       data = html.escape(str(r['data']))
-       text = f"<b>{created_at}</b>\n{data}"   
-    await callback.message.answer(rows, reply_markup=back_kb)
+    text = "\n\n".join([
+        f"<b>{r['created_at'].strftime('%d.%m')}</b>\n{html.escape(str(r['data']))}"
+        for r in rows
+    ])
+    await callback.message.answer(text, reply_markup=back_kb)
     
     await callback.answer()
     
