@@ -3,6 +3,7 @@ from app import db
 from app.config import ADMINS, WEB_APP_URL
 from app.keyboards import users_kb, webapp_kb, users_inline_schedule_kb, admin_inline_schedule_kb, admin_kb, back_kb
 from datetime import datetime, timedelta
+from aiogram.fsm.context import FSMContext
 import html
 from aiogram.types import (
     Message,
@@ -28,9 +29,10 @@ async def start_handler(message: Message, db):
     # Проверяем: есть ли запись о пользователе
     row = await db.fetchrow("SELECT * FROM users WHERE telegram_id = $1", user_id)
     
-
-    return await message.answer("👋 Ты уже запускал бота.", reply_markup=users_kb)
-    
+    if user_id in ADMINS:
+        return await message.answer("👋 Ты уже запускал бота.", reply_markup=users_kb)
+    if row:
+        return await message.answer("👋 Ты уже запускал бота.", reply_markup=users_kb)
     # Первый запуск → записываем в БД
     
     await db.execute(
@@ -45,27 +47,22 @@ async def start_handler(message: Message, db):
 
 
 
-@router.callback_query(F.data == "show_posts")
-async def show_posts(callback: CallbackQuery, db):
-    rows = await db.fetch(
-        "SELECT user_id, data, created_at FROM webapp_data ORDER BY id DESC LIMIT 5"
-    )
+@router.callback_query(F.data == "show_posts") #ПОСЛЕДНИЕ ЗАПИСИ
+async def list_posts(callback: CallbackQuery, state: FSMContext, **kwargs):
+    db = kwargs.get("db")
+    rows = await db.fetch("SELECT full_name, data, created_at FROM webapp_data ORDER BY id DESC LIMIT 5")
+    if not rows:
+        return await callback.message.edit_text("📭 Нет записей.")
 
     text = "\n\n".join([
-        f"<b>{r['created_at'].strftime('%d.%m')}</b>\n{html.escape(str(r['data']))}"
+        f"{r['full_name']} | {r['created_at'].strftime('%d.%m')}\n {r['data']}\n_________________________"
         for r in rows
     ])
-    await callback.message.answer(text, reply_markup=back_kb)
-    
+    await callback.message.edit_text(f"🗂 Последние записи:\n\n{text}", reply_markup=back_kb)
     await callback.answer()
-    
-    if not rows:
-        return await callback.message.answer("📭 Нет записей.", reply_markup=back_kb)
-    await callback.answer()
-    return
 
 
-@router.callback_query(F.data == "delay")
+@router.callback_query(F.data == "delay") #ПРЕДУПРЕЖДЕНИЕ ОПЗАДАНИЯ
 async def delay(message: Message, bot):
     user = message.from_user
 
@@ -79,16 +76,17 @@ async def delay(message: Message, bot):
         )
 
     await message.answer ("Бот передал сообщение")
+    await.message.answer()
 
-@router.callback_query(F.data == "schedule")
+@router.callback_query(F.data == "schedule") #РАСПИСАНИЕ
 async def schedule(callback: CallbackQuery, db):
     if callback.from_user.id in ADMINS:
-        await callback.message.answer("Выберите действие:", reply_markup=admin_inline_schedule_kb)
+        await callback.message.edit_text("Выберите действие:", reply_markup=admin_inline_schedule_kb)
     else:
-        await callback.message.answer("Выберите действие:", reply_markup=users_inline_schedule_kb)
+        await callback.message.edit_text("Выберите действие:", reply_markup=users_inline_schedule_kb)
 
 
-@router.callback_query(F.data == "schedule_tomorrow")
+@router.callback_query(F.data == "schedule_tomorrow") #РАСПИСАНИЕ НА ЗАВТРА
 async def schedule_tomorrow(callback: CallbackQuery, db):
     week_type = datetime.now().isocalendar()[1] % 2 + 1
     tomorrow = datetime.now() + timedelta(days=1)
@@ -101,16 +99,16 @@ async def schedule_tomorrow(callback: CallbackQuery, db):
     )
 
     if not rows:
-        return await callback.message.answer("Расписание на завтра отсутствует.", reply_markup=back_kb)
+        return await callback.message.edit_text("Расписание на завтра отсутствует.", reply_markup=back_kb)
 
     schedule_text = f"📅 Расписание на {tomorrow.strftime('%d.%m.%Y')}:\n"
     for row in rows:
         schedule_text += f"{row['pair_number']} пара — {row['subject']}\n"
 
-    await callback.message.answer(schedule_text, reply_markup=back_kb)
+    await callback.message.edit_text(schedule_text, reply_markup=back_kb)
     await callback.answer()
 
-@router.callback_query(F.data == "schedule_week")
+@router.callback_query(F.data == "schedule_week") #РАСПИСАНИЕ НА НЕДЕЛЬЮ
 async def schedule_week(callback: CallbackQuery, db):
     today = datetime.now()
     week_type = today.isocalendar()[1] % 2 + 1
@@ -121,16 +119,15 @@ async def schedule_week(callback: CallbackQuery, db):
     )
     
     if not rows:
-        return await callback.message.answer("Расписание на неделю отсутствует.", reply_markup=back_kb)
+        return await callback.message.edit_text("Расписание на неделю отсутствует.", reply_markup=back_kb)
 
     schedule_text = "\n\n".join([
         f"{row['pair_number']} пара — {row['subject']}"
         for row in rows
     ])
-    await callback.message.answer(schedule_text, reply_markup=back_kb)
+    await callback.message.edit_text(schedule_text, reply_markup=back_kb)
     await callback.answer()
     
-@router.callback_query(F.data == "back")
+@router.callback_query(F.data == "back") #ВОЗВРАТ
 async def back(callback: CallbackQuery):
-    await callback.message.delete()
-    await callback.message.answer("Выберите действие:", reply_markup=reply_kb)
+    await callback.message.edit_text("Выберите действие:", reply_markup=users_kb)

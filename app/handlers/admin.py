@@ -22,6 +22,7 @@ async def add_post_start(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
     await callback.message.answer("✍️ Введите текст записи:", reply_markup=back_kb)
     await state.set_state(PostForm.waiting_for_post)
+    await callback.answer()
 
 @router.message(PostForm.waiting_for_post)
 async def process_post(message: Message, state: FSMContext, **kwargs):
