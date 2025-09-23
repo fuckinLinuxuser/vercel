@@ -76,7 +76,7 @@ async def delay(message: Message, bot):
         )
 
     await message.answer ("Бот передал сообщение")
-    await.message.answer()
+    await message.answer()
 
 @router.callback_query(F.data == "schedule") #РАСПИСАНИЕ
 async def schedule(callback: CallbackQuery, db):
