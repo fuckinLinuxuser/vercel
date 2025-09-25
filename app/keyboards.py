@@ -46,8 +46,9 @@ admin_inline_schedule_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(text="📅 Расписание на завтра", callback_data="schedule_tomorrow"),
-            InlineKeyboardButton(text="📆 Изменить расписание", callback_data="change_schedule"),
-            InlineKeyboardButton(text="📅 Расписание на неделю", callback_data="schedule_week")
+            InlineKeyboardButton(text="📅 Расписание на неделю", callback_data="schedule_week"),
+            InlineKeyboardButton(text="Добавить", callback_data="change_schedule"),
+            InlineKeyboardButton(text="Удалить", callback_data="delete_schedule")
         ]
     ],
     resize_keyboard=True

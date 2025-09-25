@@ -90,20 +90,26 @@ async def schedule(callback: CallbackQuery, db):
 async def schedule_tomorrow(callback: CallbackQuery, db):
     week_type = datetime.now().isocalendar()[1] % 2 + 1
     tomorrow = datetime.now() + timedelta(days=1)
-    tomorrow_weekday = tomorrow.weekday()  # Понедельник = 0, Воскресенье = 6
+    tomorrow_weekday = tomorrow.weekday() +1  # Понедельник = 1, Воскресенье = 7
         
     rows = await db.fetch(
         "SELECT id, pair_number, subject FROM schedules WHERE week_type = $1 AND day_of_week = $2 ORDER BY pair_number",
         week_type,
         tomorrow_weekday
     )
-
+    if week_type == 1:
+        week_type = "Числитель"
+    else:
+        week_type = "Знаменатель"
     if not rows:
         return await callback.message.edit_text("Расписание на завтра отсутствует.", reply_markup=back_kb)
 
-    schedule_text = f"📅 Расписание на {tomorrow.strftime('%d.%m.%Y')}:\n"
+    schedule_text = f"📅 Расписание на {tomorrow.strftime('%d.%m.%Y')}\nНеделя: {week_type}:\n"
     for row in rows:
-        schedule_text += f"{row['pair_number']} пара — {row['subject']}\n"
+        if callback.from_user.id in ADMINS:
+            schedule_text += f"#{row['id']} {row['pair_number']} пара — {row['subject']}\n"
+        else:
+            schedule_text += f"{row['pair_number']} пара — {row['subject']}\n"
 
     await callback.message.edit_text(schedule_text, reply_markup=back_kb)
     await callback.answer()
@@ -114,7 +120,7 @@ async def schedule_week(callback: CallbackQuery, db):
     week_type = today.isocalendar()[1] % 2 + 1
     
     rows = await db.fetch(
-        "SELECT id, pair_number, subject FROM schedules WHERE week_type = $1 ORDER BY day_of_week, pair_number",
+        "SELECT id, pair_number, day_of_week, subject FROM schedules WHERE week_type = $1 ORDER BY day_of_week, pair_number",
         week_type
     )
     
@@ -122,7 +128,9 @@ async def schedule_week(callback: CallbackQuery, db):
         return await callback.message.edit_text("Расписание на неделю отсутствует.", reply_markup=back_kb)
 
     schedule_text = "\n\n".join([
-        f"{row['pair_number']} пара — {row['subject']}"
+        f"#{row['id']}{day_of_week[row['day_of_week']]} {row['pair_number']} пара — {row['subject']}"
+        if callback.from_user.id in ADMINS
+        else f"{row['pair_number']} пара — {row['subject']}"
         for row in rows
     ])
     await callback.message.edit_text(schedule_text, reply_markup=back_kb)

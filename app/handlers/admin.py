@@ -45,6 +45,9 @@ async def process_post(message: Message, state: FSMContext, **kwargs):
 class DeleteRecord(StatesGroup):
     waiting_for_record_id = State()
 
+class DeleteSchedule(StatesGroup):
+    waiting_for_schedule_id = State()
+
 @router.callback_query(F.data == "delete_post")
 async def delete_record_start(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer("🗑 Введи ID записи, которую хочешь удалить:", reply_markup=back_kb)
@@ -67,6 +70,27 @@ async def delete_record_confirm(message: Message, state: FSMContext, **kwargs):
     
     await state.clear()
 
+@router.callback_query(F.data == "delete_schedule")
+async def delete_schedule_start(callback: CallbackQuery, state: FSMContext):
+    await callback.message.answer("🗑 Введи ID пары, которую хочешь удалить:", reply_markup=back_kb)
+    await state.set_state(DeleteSchedule.waiting_for_schedule_id)
+    await callback.answer()
+
+@router.message(DeleteSchedule.waiting_for_schedule_id)
+async def delete_schedule_confirm(message: Message, state: FSMContext, **kwargs):
+    db = kwargs.get("db")
+    if not message.text.isdigit():
+        return await message.answer("⚠️ ID должен быть числом. Попробуй ещё раз.")
+    
+    post_id = int(message.text)
+    result = await db.execute("DELETE FROM schedules WHERE id = $1", post_id)
+    
+    if result == "DELETE 1":
+        await message.answer(f"✅ Пара #{post_id} успешно удалена.")
+    else:
+        await message.answer("❌ Пара с таким ID не найдена.")
+    
+    await state.clear()
 
 # Функция просмотра последних 10 записей (только для админов)
 @router.callback_query(F.data == "list_posts")
